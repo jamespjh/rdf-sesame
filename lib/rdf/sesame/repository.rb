@@ -260,6 +260,25 @@ module RDF::Sesame
 
     ##
     # @private
+    # @see RDF::Writeable#insert_statements
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    # Does *not* handle contexts correctly yet
+    def insert_statements(statements)
+      slice_length=100
+      each = statements.respond_to?(:each_statement) ? :each_statement : :each
+      statements.enum_for(each).each_slice(slice_length) do |sstatements|
+        data = RDF::NTriples::Writer.dump(sstatements)
+        server.post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
+          case response
+          when Net::HTTPSuccess then true
+          else false
+          end
+        end
+      end
+    end
+
+    ##
+    # @private
     # @see RDF::Mutable#delete
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
